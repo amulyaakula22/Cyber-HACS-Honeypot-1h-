@@ -34,7 +34,14 @@ sudo lxc-stop -n $containerName
 sudo lxc-destroy -n $containerName
 
 #creates a file to store mitm logs
-logName=/home/student/logs/(`date "+%m-%d"`)/(`%H:%M:%S`_$containerName)
+folderName=`date "+%m-%d"`
+fileName= `date "+%H:%M:%S"` + $container_name
+
+if [! -d "$folderName" ]; then
+    mkdir /home/student/logs/$folderName
+fi
+
+logName=/home/student/logs/$folderName/$fileName
 touch $logName
 
 hostIP="127.0.0.1"
