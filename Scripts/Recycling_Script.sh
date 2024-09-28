@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # This script takes in a container name and an external ip. #
 # Copies over the var/log/.downloads folder from the        #
@@ -7,14 +9,12 @@
 # along with the original honey                             #  
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
-#!/bin/bash
 #include <unistd.h>
 
-startTime=$(date -Iseconds)
+startTime=$(date)
 
 containerName=$1
 externalIP=$2
-
 
 containerIP=$(sudo lxc-info -iH $containerName)
 
@@ -22,7 +22,7 @@ containerIP=$(sudo lxc-info -iH $containerName)
 sudo cp /var/lib/lxc/$containerName/rootfs/var/log/.downloads /home/student/$containerName/downloaded 
  
 #removes any tail stuff
-TAIL_PID = $!
+TAIL_PID=$!
 
 #removes NAT rules
 sudo iptables --table nat --delete PREROUTING --source 0.0.0.0/0 --destination $externalIP --jump DNAT --to-destination $containerIP
@@ -42,15 +42,15 @@ sudo forever stop $taskNum
 #deletes the container
 sudo lxc-destroy -n $containerName
 
-
 #folder name based on the current date
 folderName=`date "+%m-%d"`
 
 #file name based on time of container creation and container name
-fileName= `date "+%H:%M:%S"`
+fileName=`date "+%H:%M:%S"`
 
 #checks if a folder for the current day already exists
-if [! -d "/home/student/$containerName/$folderName" ]; then
+if [ ! -d "/home/student/$containerName/$folderName" ]
+then
    mkdir /home/student/$containerName/$folderName
 fi
 
@@ -77,22 +77,26 @@ sudo iptables --table nat --insert POSTROUTING --source $containerIP --destinati
 
 # adds iptables rules for MITM
 sudo iptables --table nat --insert PREROUTING --source 0.0.0.0/0 --destination "$externalIP" --protocol tcp --dport 22 --jump DNAT --to-destination "$hostIP:$port"
-sudo iptables --table nat --insert POSTROUTING --source "$hostIP:$port" --destination 0.0.0.0/0 --protocol tcp --dport 22 --jump SNAT --to-source "$externalIP" 
+sudo iptables --table nat --insert POSTROUTING --source "$hostIP:$port" --destination 0.0.0.0/0 --protocol tcp --dport 22 --jump SNAT --to-source "$externalIP"
+
+sudo lxc-attach -n $containerName -- sh -c "sudo apt install openssh-server"
+sudo lxc-attach -n $containerName -- sh -c "sudo apt-get install curl"
+sudo lxc-attach -n $containerName -- sh -c "sudo apt-get install wget"
 
 #poison wget
 sudo lxc-attach -n $containerName -- mkdir -p "/var/log/.downloads"
-sudo lxc-attach -n $containerName -- sh -c "cp '/usr/bin/wget' '/usr/bin/wgetOG'"
-sudo lxc-attach -n $containerName -- sh -c "chmod u+x /usr/bin/wgetOG"
-sudo lxc-attach -n $containerName -- sh -c "echo 'NOW=$( date '+%F_%H:%M:%S' )' > '/usr/bin/wget'"
-sudo lxc-attach -n $containerName -- sh -c "echo 'wgetOG \$@ -O /var/log/.downloads/\$NOW-$containerName -q /dev/null 2>&1' >> '/usr/bin/wget'"
-sudo lxc-attach -n $containerName -- sh -c "echo 'wgetOG \$@' >> '/usr/bin/wget'"
+sudo lxc-attach -n $containerName -- sh -c "cp '/bin/wget' '/bin/wgetOG'"
+sudo lxc-attach -n $containerName -- sh -c "chmod u+x /bin/wgetOG"
+sudo lxc-attach -n $containerName -- sh -c "echo 'NOW=$( date '+%F_%H:%M:%S' )' > '/bin/wget'"
+sudo lxc-attach -n $containerName -- sh -c "echo 'wgetOG \$@ -O /var/log/.downloads/\$NOW-$containerName -q /dev/null 2>&1' >> '/bin/wget'"
+sudo lxc-attach -n $containerName -- sh -c "echo 'wgetOG \$@' >> '/bin/wget'"
 
 #poison curl
-sudo lxc-attach -n $containerName -- sh -c "cp '/usr/bin/curl' '/usr/bin/curlOG'"
-sudo lxc-attach -n $containerName -- sh -c "chmod u+x /usr/bin/curlOG"
-sudo lxc-attach -n $containerName -- sh -c "echo 'NOW=$( date '+%F_%H:%M:%S' )' > '/usr/bin/curl'"
-sudo lxc-attach -n $containerName -- sh -c "echo 'curlOG -O /var/log/.downloads/\$NOW-$containerName \$@ -q /dev/null 2>&1' >> '/usr/bin/curl'"
-sudo lxc-attach -n $containerName -- sh -c "echo 'wgetOG \$@' >> '/usr/bin/curl'"
+sudo lxc-attach -n $containerName -- sh -c "cp '/bin/curl' '/bin/curlOG'"
+sudo lxc-attach -n $containerName -- sh -c "chmod u+x /bin/curlOG"
+sudo lxc-attach -n $containerName -- sh -c "echo 'NOW=$( date '+%F_%H:%M:%S' )' > '/bin/curl'"
+sudo lxc-attach -n $containerName -- sh -c "echo 'curlOG -O /var/log/.downloads/\$NOW-$containerName \$@ -q /dev/null 2>&1' >> '/bin/curl'"
+sudo lxc-attach -n $containerName -- sh -c "echo 'wgetOG \$@' >> '/bin/curl'"
 
 #cp command to copy honey
 sudo cp -r /home/student/honey/Department1 /var/lib/lxc/$containerName/rootfs/home/
@@ -102,8 +106,8 @@ sudo cp -r  /home/student/honey/Department4 /var/lib/lxc/$containerName/rootfs/h
 sudo cp -r  /home/student/honey/Department5 /var/lib/lxc/$containerName/rootfs/home/
 
 timerLog=/home/student/$containerName/timer.txt
-echo “00:00” > $timerLog
+echo 00:00 > $timerLog
 
-endTime=$(date -Iseconds)
+endTime=$(date)
 
 echo "recycling started at $startTime and ended at $endTime"
