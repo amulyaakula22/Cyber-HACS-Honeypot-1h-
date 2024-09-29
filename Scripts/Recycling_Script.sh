@@ -10,7 +10,7 @@
 # along with the original honey                             #  
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
-startTime=$(date)
+startTime=$(date "+%H:%M:%S")
 containerName=$1
 externalIP=$2
 prefix=$3
@@ -124,9 +124,9 @@ sudo cp -r  /home/student/honey/Department4 /var/lib/lxc/$containerName/rootfs/h
 sudo cp -r  /home/student/honey/Department5 /var/lib/lxc/$containerName/rootfs/home/
 
 
+#resets timer
 timerLog=/home/student/$containerName/timer.txt
 echo 00:00 > $timerLog
 
-
-endTime=$(date)
+endTime=$(date "+%H:%M:%S")
 echo "recycling started at $startTime and ended at $endTime"
